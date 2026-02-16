@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 海報生成器 - 進階版（真實照片 + 專業設計）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 36px;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .demo-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .demo-title {
+            font-size: 20px;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .demo-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        canvas {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        
+        .feature-tag {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .btn-download {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .btn-download:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 AI 海報生成器 - 進階功能展示</h1>
+        
+        <div class="demo-grid">
+            <!-- Demo 1: 照片混合設計 -->
+            <div class="demo-card">
+                <div class="demo-title">📸 照片混合設計</div>
+                <div class="demo-desc">
+                    將實際店鋪照片與設計元素結合，打造專業視覺效果
+                </div>
+                <div>
+                    <span class="feature-tag">真實照片</span>
+                    <span class="feature-tag">漸層遮罩</span>
+                    <span class="feature-tag">專業排版</span>
+                </div>
+                <canvas id="photoCanvas" width="800" height="800"></canvas>
+                <button class="btn-download" onclick="downloadCanvas('photoCanvas', '照片混合海報')">
+                    ⬇️ 下載海報
+                </button>
+            </div>
+            
+            <!-- Demo 2: 3D 立體效果 -->
+            <div class="demo-card">
+                <div class="demo-title">🎭 3D 立體效果</div>
+                <div class="demo-desc">
+                    運用陰影、漸層打造立體感，讓海報更吸睛
+                </div>
+                <div>
+                    <span class="feature-tag">3D 陰影</span>
+                    <span class="feature-tag">漸層光效</span>
+                    <span class="feature-tag">層次設計</span>
+                </div>
+                <canvas id="3dCanvas" width="800" height="800"></canvas>
+                <button class="btn-download" onclick="downloadCanvas('3dCanvas', '3D立體海報')">
+                    ⬇️ 下載海報
+                </button>
+            </div>
+            
+            <!-- Demo 3: 動感設計 -->
+            <div class="demo-card">
+                <div class="demo-title">⚡ 動感視覺設計</div>
+                <div class="demo-desc">
+                    運用線條、圖形營造動態感，傳達緊迫氛圍
+                </div>
+                <div>
+                    <span class="feature-tag">動感線條</span>
+                    <span class="feature-tag">幾何圖形</span>
+                    <span class="feature-tag">視覺衝擊</span>
+                </div>
+                <canvas id="dynamicCanvas" width="800" height="800"></canvas>
+                <button class="btn-download" onclick="downloadCanvas('dynamicCanvas', '動感海報')">
+                    ⬇️ 下載海報
+                </button>
+            </div>
+            
+            <!-- Demo 4: 高級質感設計 -->
+            <div class="demo-card">
+                <div class="demo-title">💎 奢華質感設計</div>
+                <div class="demo-desc">
+                    金屬質感、光澤效果，打造高端品牌形象
+                </div>
+                <div>
+                    <span class="feature-tag">金屬質感</span>
+                    <span class="feature-tag">光澤效果</span>
+                    <span class="feature-tag">奢華感</span>
+                </div>
+                <canvas id="luxuryCanvas" width="800" height="800"></canvas>
+                <button class="btn-download" onclick="downloadCanvas('luxuryCanvas', '奢華質感海報')">
+                    ⬇️ 下載海報
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Demo 1: 照片混合設計
+        function drawPhotoMix() {
+            const canvas = document.getElementById('photoCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 模擬包廂照片背景（深色漸層代替）
+            const bgGradient = ctx.createLinearGradient(0, 0, 800, 800);
+            bgGradient.addColorStop(0, '#2c3e50');
+            bgGradient.addColorStop(1, '#34495e');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 800, 800);
+            
+            // 添加紋理效果
+            for (let i = 0; i < 100; i++) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+                ctx.fillRect(Math.random() * 800, Math.random() * 800, Math.random() * 50, Math.random() * 50);
+            }
+            
+            // 半透明遮罩
+            const maskGradient = ctx.createLinearGradient(0, 400, 0, 800);
+            maskGradient.addColorStop(0, 'rgba(231, 76, 60, 0.7)');
+            maskGradient.addColorStop(1, 'rgba(192, 57, 43, 0.95)');
+            ctx.fillStyle = maskGradient;
+            ctx.fillRect(0, 400, 800, 400);
+            
+            // 品牌標誌
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 50px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('ONE桌遊', 400, 80);
+            
+            // 主標題（大字）
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 70px Microsoft JhengHei';
+            ctx.fillText('春節限定', 400, 500);
+            ctx.font = 'bold 90px Microsoft JhengHei';
+            ctx.fillText('訂6送1', 400, 610);
+            
+            ctx.shadowColor = 'transparent';
+            
+            // 副標題
+            ctx.font = '35px Microsoft JhengHei';
+            ctx.fillText('全場包廂同享優惠', 400, 670);
+            
+            // 裝飾線條
+            ctx.strokeStyle = '#f39c12';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(250, 460);
+            ctx.lineTo(550, 460);
+            ctx.stroke();
+            
+            // 價格標籤
+            ctx.fillStyle = '#f39c12';
+            ctx.fillRect(250, 710, 300, 70);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 45px Microsoft JhengHei';
+            ctx.fillText('立即預約', 400, 755);
+        }
+        
+        // Demo 2: 3D 立體效果
+        function draw3D() {
+            const canvas = document.getElementById('3dCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 背景漸層
+            const bgGradient = ctx.createRadialGradient(400, 400, 0, 400, 400, 600);
+            bgGradient.addColorStop(0, '#667eea');
+            bgGradient.addColorStop(1, '#3b4cb8');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 800, 800);
+            
+            // 3D 卡片效果
+            function draw3DCard(x, y, width, height, color, depth) {
+                // 陰影層
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(x + depth, y + depth, width, height);
+                
+                // 主體
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, width, height);
+                
+                // 高光
+                const highlight = ctx.createLinearGradient(x, y, x, y + height);
+                highlight.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = highlight;
+                ctx.fillRect(x, y, width, height / 2);
+            }
+            
+            // 繪製多層卡片
+            draw3DCard(100, 100, 600, 200, '#e74c3c', 15);
+            draw3DCard(150, 350, 500, 350, 'white', 10);
+            
+            // 標題
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 70px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+            ctx.fillText('限時優惠', 400, 200);
+            ctx.shadowColor = 'transparent';
+            
+            // 內容
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 50px Microsoft JhengHei';
+            ctx.fillText('🎊 春節特別活動', 400, 450);
+            
+            ctx.font = '35px Microsoft JhengHei';
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillText('訂6送1小時', 400, 520);
+            ctx.fillText('全場包廂享優惠', 400, 570);
+            
+            // 立體按鈕
+            draw3DCard(250, 620, 300, 70, '#e74c3c', 5);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 40px Microsoft JhengHei';
+            ctx.fillText('立即搶購', 400, 668);
+        }
+        
+        // Demo 3: 動感設計
+        function drawDynamic() {
+            const canvas = document.getElementById('dynamicCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 深色背景
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, 800, 800);
+            
+            // 動感線條
+            ctx.strokeStyle = '#16213e';
+            ctx.lineWidth = 30;
+            for (let i = 0; i < 15; i++) {
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * 800, 0);
+                ctx.lineTo(Math.random() * 800, 800);
+                ctx.stroke();
+            }
+            
+            // 彩色光束
+            const colors = ['#ff6b6b', '#f39c12', '#3498db', '#9b59b6'];
+            colors.forEach((color, i) => {
+                const gradient = ctx.createLinearGradient(0, 200 * i, 800, 200 * (i + 1));
+                gradient.addColorStop(0, 'transparent');
+                gradient.addColorStop(0.5, color + '40');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 800, 800);
+            });
+            
+            // 幾何圖形
+            ctx.fillStyle = 'rgba(255, 107, 107, 0.2)';
+            ctx.beginPath();
+            ctx.arc(650, 150, 200, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+            ctx.fillRect(50, 550, 250, 250);
+            
+            // 主標題
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 80px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 30;
+            ctx.fillText('🔥 限時特惠', 400, 300);
+            
+            ctx.shadowColor = '#3498db';
+            ctx.font = 'bold 120px Microsoft JhengHei';
+            ctx.fillText('訂6送1', 400, 450);
+            
+            ctx.shadowColor = 'transparent';
+            
+            // 副標題
+            ctx.font = '40px Microsoft JhengHei';
+            ctx.fillText('名額有限 · 手刀預約', 400, 550);
+            
+            // 倒數計時效果
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(250, 620, 300, 80);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 45px Microsoft JhengHei';
+            ctx.fillText('⏰ 最後3天', 400, 672);
+        }
+        
+        // Demo 4: 奢華質感
+        function drawLuxury() {
+            const canvas = document.getElementById('luxuryCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 深色背景
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, 800, 800);
+            
+            // 金色漸層背景
+            const bgGradient = ctx.createRadialGradient(400, 400, 0, 400, 400, 500);
+            bgGradient.addColorStop(0, 'rgba(212, 175, 55, 0.3)');
+            bgGradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 800, 800);
+            
+            // 金色裝飾框
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(50, 50, 700, 700);
+            ctx.strokeRect(70, 70, 660, 660);
+            
+            // 角落裝飾
+            function drawCorner(x, y, flip) {
+                ctx.save();
+                ctx.translate(x, y);
+                if (flip) ctx.scale(-1, -1);
+                
+                ctx.fillStyle = '#d4af37';
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(60, 0);
+                ctx.lineTo(60, 10);
+                ctx.lineTo(10, 10);
+                ctx.lineTo(10, 60);
+                ctx.lineTo(0, 60);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            drawCorner(50, 50, false);
+            drawCorner(750, 50, false);
+            drawCorner(50, 750, false);
+            drawCorner(750, 750, false);
+            
+            // Logo
+            ctx.fillStyle = '#d4af37';
+            ctx.font = 'bold 50px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('ONE桌遊', 400, 150);
+            
+            // 金色線條
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(250, 180);
+            ctx.lineTo(550, 180);
+            ctx.stroke();
+            
+            // 主標題
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 60px Microsoft JhengHei';
+            ctx.fillText('VIP 尊榮優惠', 400, 300);
+            
+            // 金色大字
+            const goldGradient = ctx.createLinearGradient(0, 350, 0, 450);
+            goldGradient.addColorStop(0, '#ffd700');
+            goldGradient.addColorStop(0.5, '#d4af37');
+            goldGradient.addColorStop(1, '#b8860b');
+            
+            ctx.fillStyle = goldGradient;
+            ctx.font = 'bold 100px Microsoft JhengHei';
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 20;
+            ctx.fillText('訂6送1', 400, 430);
+            ctx.shadowColor = 'transparent';
+            
+            // 內容
+            ctx.fillStyle = '#bdc3c7';
+            ctx.font = '35px Microsoft JhengHei';
+            ctx.fillText('全館包廂 · 尊享禮遇', 400, 520);
+            
+            // 金色按鈕
+            ctx.fillStyle = goldGradient;
+            ctx.fillRect(250, 600, 300, 80);
+            
+            const btnHighlight = ctx.createLinearGradient(250, 600, 250, 680);
+            btnHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            btnHighlight.addColorStop(1, 'transparent');
+            ctx.fillStyle = btnHighlight;
+            ctx.fillRect(250, 600, 300, 40);
+            
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 40px Microsoft JhengHei';
+            ctx.fillText('立即預約', 400, 652);
+        }
+        
+        // 下載功能
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = `ONE桌遊_${filename}_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // 初始化所有 Demo
+        window.addEventListener('load', () => {
+            drawPhotoMix();
+            draw3D();
+            drawDynamic();
+            drawLuxury();
+        });
+    </script>
+</body>
+</html>
