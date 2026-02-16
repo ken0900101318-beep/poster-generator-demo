@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONE桌遊 AI 海報生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .template-card {
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .template-card:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+        
+        .template-card.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .template-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .template-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #4caf50;
+            color: white;
+            grid-column: span 2;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+        
+        .preview-container {
+            position: sticky;
+            top: 20px;
+        }
+        
+        #posterCanvas {
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        
+        .preview-tips {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .template-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h1>🎨 AI 海報生成器</h1>
+            <div class="subtitle">輸入活動資訊，AI 自動生成精美海報</div>
+            
+            <div class="form-group">
+                <label>活動名稱</label>
+                <input type="text" id="eventName" placeholder="例如：春節限定優惠" value="春節限定優惠">
+            </div>
+            
+            <div class="form-group">
+                <label>活動內容</label>
+                <textarea id="eventContent" placeholder="例如：訂6送1小時">訂6送1小時，全場包廂享優惠！</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>原價（選填）</label>
+                <input type="text" id="originalPrice" placeholder="例如：$1,200" value="$1,200">
+            </div>
+            
+            <div class="form-group">
+                <label>特價</label>
+                <input type="text" id="specialPrice" placeholder="例如：$1,000" value="$1,000">
+            </div>
+            
+            <div class="form-group">
+                <label>選擇模板風格</label>
+                <div class="template-grid">
+                    <div class="template-card active" data-template="spring-festival">
+                        <div class="template-icon">🧧</div>
+                        <div class="template-name">春節喜慶</div>
+                    </div>
+                    <div class="template-card" data-template="promotion">
+                        <div class="template-icon">🔥</div>
+                        <div class="template-name">限時特價</div>
+                    </div>
+                    <div class="template-card" data-template="simple">
+                        <div class="template-icon">📢</div>
+                        <div class="template-name">簡約公告</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="optimizeText()">✨ AI 優化文案</button>
+                <button class="btn btn-secondary" onclick="generatePoster()">🎨 生成海報</button>
+                <button class="btn btn-success" onclick="downloadPoster()">⬇️ 下載海報</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div>🤖 AI 正在處理中...</div>
+            </div>
+        </div>
+        
+        <div class="panel preview-container">
+            <h1>📱 即時預覽</h1>
+            <div class="subtitle">點擊海報可放大查看</div>
+            
+            <canvas id="posterCanvas" width="1080" height="1080"></canvas>
+            
+            <div class="preview-tips">
+                💡 <strong>提示：</strong><br>
+                • 修改內容後點擊「生成海報」即時更新<br>
+                • 點擊「AI 優化文案」讓文案更吸引人<br>
+                • 生成後可直接下載 PNG 圖片
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let selectedTemplate = 'spring-festival';
+        
+        // 模板選擇
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                selectedTemplate = this.dataset.template;
+                generatePoster();
+            });
+        });
+        
+        // AI 優化文案（模擬）
+        function optimizeText() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+            
+            setTimeout(() => {
+                const eventName = document.getElementById('eventName').value;
+                const content = document.getElementById('eventContent').value;
+                
+                // 模擬 AI 優化（實際會呼叫 OpenAI API）
+                const optimized = {
+                    'spring-festival': {
+                        name: '🎊 恭賀新春 限定優惠',
+                        content: '🎁 訂6送1小時！全館包廂同享優惠\n把握機會，與親友歡聚好時光！'
+                    },
+                    'promotion': {
+                        name: '🔥 限時優惠 最後召集',
+                        content: '⏰ 訂6送1！名額有限，手刀預約\n錯過再等一年，立即行動！'
+                    },
+                    'simple': {
+                        name: '📢 活動公告',
+                        content: '訂6送1小時優惠方案\n適用全館包廂，歡迎預約'
+                    }
+                };
+                
+                const opt = optimized[selectedTemplate];
+                document.getElementById('eventName').value = opt.name;
+                document.getElementById('eventContent').value = opt.content;
+                
+                loading.classList.remove('active');
+                generatePoster();
+            }, 1500);
+        }
+        
+        // 生成海報
+        function generatePoster() {
+            const canvas = document.getElementById('posterCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const eventName = document.getElementById('eventName').value;
+            const eventContent = document.getElementById('eventContent').value;
+            const originalPrice = document.getElementById('originalPrice').value;
+            const specialPrice = document.getElementById('specialPrice').value;
+            
+            // 清空畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 根據模板繪製
+            if (selectedTemplate === 'spring-festival') {
+                drawSpringFestival(ctx, eventName, eventContent, originalPrice, specialPrice);
+            } else if (selectedTemplate === 'promotion') {
+                drawPromotion(ctx, eventName, eventContent, originalPrice, specialPrice);
+            } else {
+                drawSimple(ctx, eventName, eventContent, originalPrice, specialPrice);
+            }
+        }
+        
+        // 春節模板
+        function drawSpringFestival(ctx, name, content, original, special) {
+            // 背景漸層（紅色）
+            const gradient = ctx.createLinearGradient(0, 0, 0, 1080);
+            gradient.addColorStop(0, '#ff6b6b');
+            gradient.addColorStop(1, '#c92a2a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1080, 1080);
+            
+            // 金色裝飾圓
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+            ctx.beginPath();
+            ctx.arc(200, 200, 300, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(880, 880, 400, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // ONE桌遊 Logo 區域
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillRect(40, 40, 200, 80);
+            ctx.fillStyle = '#667eea';
+            ctx.font = 'bold 40px Microsoft JhengHei';
+            ctx.fillText('ONE桌遊', 60, 95);
+            
+            // 活動名稱
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 80px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.fillText(name, 540, 350);
+            
+            // 活動內容框
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillRect(90, 450, 900, 250);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '45px Microsoft JhengHei';
+            const lines = content.split('\n');
+            lines.forEach((line, i) => {
+                ctx.fillText(line, 540, 530 + i * 60);
+            });
+            
+            // 價格區域
+            if (original) {
+                ctx.fillStyle = '#999';
+                ctx.font = '40px Microsoft JhengHei';
+                ctx.fillText('原價 ' + original, 540, 800);
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(400, 785);
+                ctx.lineTo(680, 785);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = 'bold 90px Microsoft JhengHei';
+            ctx.fillText('特價 ' + special, 540, 920);
+            
+            // 底部裝飾
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '35px Microsoft JhengHei';
+            ctx.fillText('🧧 恭賀新春 🧧', 540, 1020);
+        }
+        
+        // 促銷模板
+        function drawPromotion(ctx, name, content, original, special) {
+            // 背景漸層（橙色到紅色）
+            const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
+            gradient.addColorStop(0, '#ff6b35');
+            gradient.addColorStop(1, '#f7931e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1080, 1080);
+            
+            // 白色裝飾條紋
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 50;
+            for (let i = 0; i < 20; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 100 - 200, 0);
+                ctx.lineTo(i * 100 + 800, 1080);
+                ctx.stroke();
+            }
+            
+            // ONE桌遊 Logo
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 50px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('ONE桌遊', 540, 100);
+            
+            // 火焰圖標
+            ctx.font = '120px Arial';
+            ctx.fillText('🔥', 540, 250);
+            
+            // 活動名稱
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 75px Microsoft JhengHei';
+            ctx.fillText(name, 540, 370);
+            
+            // 白色內容框
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillRect(90, 430, 900, 280);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '48px Microsoft JhengHei';
+            const lines = content.split('\n');
+            lines.forEach((line, i) => {
+                ctx.fillText(line, 540, 520 + i * 70);
+            });
+            
+            // 價格標籤
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(340, 780, 400, 150);
+            
+            if (original) {
+                ctx.fillStyle = '#999';
+                ctx.font = 'bold 35px Microsoft JhengHei';
+                ctx.fillText('原價 ' + original, 540, 830);
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(420, 815);
+                ctx.lineTo(660, 815);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#ff6b35';
+            ctx.font = 'bold 85px Microsoft JhengHei';
+            ctx.fillText(special, 540, 910);
+            
+            // 底部標語
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 40px Microsoft JhengHei';
+            ctx.fillText('⏰ 名額有限 立即預約', 540, 1020);
+        }
+        
+        // 簡約模板
+        function drawSimple(ctx, name, content, original, special) {
+            // 白色背景
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, 1080, 1080);
+            
+            // 頂部紫色條
+            const gradient = ctx.createLinearGradient(0, 0, 1080, 0);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1080, 200);
+            
+            // ONE桌遊 Logo
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 60px Microsoft JhengHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('ONE桌遊', 540, 130);
+            
+            // 活動名稱
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 70px Microsoft JhengHei';
+            ctx.fillText(name, 540, 350);
+            
+            // 分隔線
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(240, 400);
+            ctx.lineTo(840, 400);
+            ctx.stroke();
+            
+            // 活動內容
+            ctx.fillStyle = '#555';
+            ctx.font = '45px Microsoft JhengHei';
+            const lines = content.split('\n');
+            lines.forEach((line, i) => {
+                ctx.fillText(line, 540, 500 + i * 60);
+            });
+            
+            // 價格框
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(240, 720, 600, 180);
+            
+            if (original) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.font = '38px Microsoft JhengHei';
+                ctx.fillText('原價 ' + original, 540, 780);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(430, 765);
+                ctx.lineTo(650, 765);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 75px Microsoft JhengHei';
+            ctx.fillText(special, 540, 870);
+            
+            // 底部聯絡資訊
+            ctx.fillStyle = '#999';
+            ctx.font = '35px Microsoft JhengHei';
+            ctx.fillText('📞 預約專線：0800-123-456', 540, 1000);
+        }
+        
+        // 下載海報
+        function downloadPoster() {
+            const canvas = document.getElementById('posterCanvas');
+            const link = document.createElement('a');
+            link.download = 'ONE桌遊海報_' + Date.now() + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // 初始化生成第一個海報
+        window.addEventListener('load', () => {
+            generatePoster();
+        });
+    </script>
+</body>
+</html>
